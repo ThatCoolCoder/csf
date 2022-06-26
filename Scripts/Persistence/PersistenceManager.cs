@@ -5,6 +5,9 @@
 // Transforms of Spatial-derived nodes are automatically persisted.
 // To perist custom properties, mark them with the [PersistableProperty] attribute. (properties must be public)
 
+// Internal notes:
+// Transforms are really big to store in object form in JSON but fortunately, Godot can base64-encode them by default and this makes a huge difference.
+
 using Godot;
 using System;
 using System.Linq;
@@ -79,7 +82,7 @@ public class PersistenceManager
         // Set properties
         if (node is Spatial spatial)
         {
-            spatial.Transform = savedNode.GetValue("Transform").ToObject<Transform>();
+            spatial.Transform = StringToTransform(savedNode.GetValue("Transform").ToString());
         }
         // Custom properties
         foreach (var customProperty in (savedNode.GetValue("CustomProperties") as JObject))
@@ -101,7 +104,7 @@ public class PersistenceManager
         if (node is Spatial spatial)
         {
             // persist spatial information - transform, etc
-            jObject.Add("Transform", JToken.FromObject(spatial.Transform));
+            jObject.Add("Transform", JToken.FromObject(TransformToString(spatial.Transform)));
         }
         
         // Persist custom properties
@@ -117,5 +120,15 @@ public class PersistenceManager
         jObject.Add("CustomProperties", customProperties);
 
         return jObject;
+    }
+
+    private static string TransformToString(Transform transform)
+    {
+        return Marshalls.VariantToBase64(transform);
+    }
+
+    private static Transform StringToTransform(string str)
+    {
+        return (Transform) Marshalls.Base64ToVariant(str);
     }
 }
