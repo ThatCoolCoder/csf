@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Scripts/Plants/CubePlant.cs" type="Script" id=1]
+[ext_resource path="res://Scenes/Plants/Fruit.tscn" type="PackedScene" id=2]
+
+[sub_resource type="OpenSimplexNoise" id=3]
+
+[sub_resource type="NoiseTexture" id=1]
+as_normalmap = true
+bump_strength = 10.4
+noise = SubResource( 3 )
+
+[sub_resource type="SpatialMaterial" id=2]
+albedo_color = Color( 0.215686, 0.439216, 0.145098, 1 )
+normal_enabled = true
+normal_scale = 1.0
+normal_texture = SubResource( 1 )
+
+[node name="CubePlant" type="Spatial" groups=["Persistable", "Tickable"]]
+script = ExtResource( 1 )
+
+[node name="Small" type="CSGBox" parent="."]
+transform = Transform( 0.388735, 0, 0, 0, 0.388735, 0, 0, 0, 0.388735, 0, 0.381968, 0 )
+use_collision = true
+material = SubResource( 2 )
+
+[node name="FullSize" type="CSGBox" parent="."]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, 0, 1.07409, 0 )
+use_collision = true
+material = SubResource( 2 )
+
+[node name="Fruit" type="Spatial" parent="."]
+
+[node name="Fruit" parent="Fruit" instance=ExtResource( 2 )]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, 1.1161, 1.95319, 0 )
+
+[node name="Fruit2" parent="Fruit" instance=ExtResource( 2 )]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, -0.485567, 1.38472, 1.15058 )
+
+[node name="Fruit3" parent="Fruit" instance=ExtResource( 2 )]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, -0.119233, 2.15726, 0.0282215 )
+
+[node name="Fruit4" parent="Fruit" instance=ExtResource( 2 )]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, 0.167959, 1.47971, -1.08347 )
+
+[node name="Fruit5" parent="Fruit" instance=ExtResource( 2 )]
+transform = Transform( 1.06132, 0, 0, 0, 1.06132, 0, 0, 0, 1.06132, -0.843546, 0.906176, -1.08347 )

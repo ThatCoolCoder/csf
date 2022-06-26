@@ -1,0 +1,42 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Scripts/TickableSky.cs" type="Script" id=1]
+[ext_resource path="res://default_env.tres" type="Environment" id=2]
+[ext_resource path="res://Scripts/BlurOnRuntime.cs" type="Script" id=3]
+
+[sub_resource type="Curve" id=3]
+_data = [ Vector2( 0.249679, 0.0582823 ), 0.0, 9.98666, 0, 0, Vector2( 0.500962, 1 ), 0.0, 0.0, 0, 0, Vector2( 0.748397, 0.0460123 ), -11.6214, 0.0, 0, 0 ]
+
+[sub_resource type="Curve" id=2]
+_data = [ Vector2( 0.233013, 0.0582823 ), 0.0, 12.3854, 0, 0, Vector2( 0.502244, 1 ), 0.0, 0.0, 0, 0, Vector2( 0.772756, 0.0460123 ), -11.9632, 0.0, 0, 0 ]
+
+[sub_resource type="Curve" id=4]
+max_value = 0.2
+_data = [ Vector2( 0.252004, 0.0288344 ), 0.0, 2.14294, 0, 0, Vector2( 0.500501, 0.19816 ), 0.0, 0.0, 0, 0, Vector2( 0.74499, 0.0337423 ), -2.28581, 0.0, 0, 0 ]
+
+[sub_resource type="Curve" id=5]
+_data = [ Vector2( 0.247996, 0 ), 0.0, 11.5651, 0, 0, Vector2( 0.498497, 1 ), 0.0, 0.0, 0, 0, Vector2( 0.74499, 0 ), -12.2454, 0.0, 0, 0 ]
+
+[node name="Sky" type="Spatial" groups=["Tickable"]]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.953137 )
+script = ExtResource( 1 )
+SkyBrightnessCurve = SubResource( 3 )
+GroundBrightnessCurve = SubResource( 2 )
+AmbientLightCurve = SubResource( 4 )
+AmbientLightMultiplier = 0.15
+DirectionalLightEnergyCurve = SubResource( 5 )
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource( 2 )
+script = ExtResource( 3 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.391085, 0.920355, 0, -0.920355, 0.391085, 0, 0, 0 )
+light_energy = 0.812
+shadow_enabled = true
+
+[node name="CSGBox" type="CSGBox" parent="DirectionalLight"]
+transform = Transform( 1, 0, 0, 0, 1, -2.98023e-08, 0, 2.98023e-08, 1, 0, 0.0335913, -1.05657 )
+visible = false
+width = 0.726641
+height = 0.756597

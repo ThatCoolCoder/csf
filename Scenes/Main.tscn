@@ -1,0 +1,75 @@
+[gd_scene load_steps=11 format=2]
+
+[ext_resource path="res://Scenes/Sky.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Scripts/TickManager.cs" type="Script" id=2]
+[ext_resource path="res://Assets/Terrain/data.hterrain" type="Resource" id=3]
+[ext_resource path="res://addons/zylann.hterrain/hterrain.gd" type="Script" id=4]
+[ext_resource path="res://addons/zylann.hterrain/hterrain_texture_set.gd" type="Script" id=5]
+[ext_resource path="res://Scenes/Player.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Scenes/UI/Hud.tscn" type="PackedScene" id=8]
+
+[sub_resource type="SpatialMaterial" id=1]
+
+[sub_resource type="SpatialMaterial" id=4]
+albedo_color = Color( 1, 0, 0, 1 )
+
+[sub_resource type="Resource" id=3]
+script = ExtResource( 5 )
+mode = 0
+textures = [ [  ], [  ] ]
+
+[node name="Main" type="Spatial"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00121969, 0, 0.000781447 )
+
+[node name="CSGBox" type="CSGBox" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.80165, 0.677453, 3.72941 )
+material_override = SubResource( 1 )
+use_collision = true
+width = 3.80154
+height = 0.676604
+depth = 3.94544
+
+[node name="CSGBox2" type="CSGBox" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31997, 0.677453, 3.72941 )
+material_override = SubResource( 4 )
+use_collision = true
+width = 3.80154
+height = 0.676604
+depth = 3.94544
+
+[node name="Sky" parent="." instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 0.986518, -0.163653, 0, 0.163653, 0.986518, 0, 8.07061, 8.91159e-08 )
+
+[node name="TickManager" type="Spatial" parent="."]
+script = ExtResource( 2 )
+
+[node name="TickTimer" type="Timer" parent="TickManager"]
+autostart = true
+
+[node name="HTerrain" type="Spatial" parent="."]
+script = ExtResource( 4 )
+map_scale = Vector3( 10, 10, 15 )
+centered = true
+_terrain_data = ExtResource( 3 )
+chunk_size = 32
+collision_enabled = true
+collision_layer = 1
+collision_mask = 1
+shader_type = "Classic4Lite"
+custom_shader = null
+custom_globalmap_shader = null
+texture_set = SubResource( 3 )
+render_layers = 1
+shader_params/u_ground_uv_scale = 20
+shader_params/u_depth_blending = true
+shader_params/u_triplanar = false
+shader_params/u_tile_reduction = Plane( 0, 0, 0, 0 )
+
+[node name="Player" parent="." instance=ExtResource( 6 )]
+transform = Transform( 0.554728, 0, -0.832032, 0, 1, 0, 0.832032, 0, 0.554728, 9.97142, 3.20766, -5.21612 )
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Hud" parent="CanvasLayer" instance=ExtResource( 8 )]
+
+[connection signal="timeout" from="TickManager/TickTimer" to="TickManager" method="SubTick"]
