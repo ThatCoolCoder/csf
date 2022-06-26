@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 public class BasePlant : Spatial, ITickable
 {
@@ -34,9 +35,11 @@ public class BasePlant : Spatial, ITickable
     public virtual List<GrowthStage> GrowthStages { get; set; } = new();
     
     [PersistableProperty]
+    [JsonProperty("A")]
     public int CurrentStageTicks { get; set; } = 0;
 
     [PersistableProperty]
+    [JsonProperty("B")]
     public int CurrentGrowthStageIdx
     {
         get { return GrowthStages.IndexOf(currentGrowthStage); }

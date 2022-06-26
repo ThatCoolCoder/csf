@@ -4,19 +4,22 @@
 // Persistable nodes can exist in the base scene from the start or can have been instantiated in gameplay - the manager will detect whether an instantiated node is needed
 // Transforms of Spatial-derived nodes are automatically persisted.
 // To perist custom properties, mark them with the [PersistableProperty] attribute. (properties must be public)
+// To save file size, it's recommended to use the Newtonsoft.Json [JsonProperty] attribute to shorten property names
 
 using Godot;
 using System;
 using System.Linq;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 
 public class PersistenceManager
 {
-    public static readonly string TestFileName = "user://game.json";
+    public static readonly string TestFileName = "user://game.bson";
 
     public static void PersistScene(SceneTree tree, string fileName)
     {
@@ -25,28 +28,35 @@ public class PersistenceManager
         JArray result = new();
         foreach (var node in persistableNodes) result.Add(PersistNode(node));
         
-        var file = new File();
-        file.Open(fileName, File.ModeFlags.Write);
-        file.StoreString(result.ToString());
-        file.Close();
+        MemoryStream binaryResult = new MemoryStream();
+        using var writer = new BsonDataWriter(binaryResult);
+        result.WriteTo(writer);
+
+        using var file = new Godot.File();
+        file.Open(fileName, Godot.File.ModeFlags.Write);
+        file.StoreBuffer(binaryResult.ToArray());
     }
 
     public static async Task LoadPersistedScene(SceneTree tree, string fileName, string baseScenePath)
     {
         // Load scene from baseScenePath then load persisted data
-        var file = new File();
-        file.Open(fileName, File.ModeFlags.Read);
-        var stringData = file.GetAsText();
+
+        // Read file
+        var file = new Godot.File();
+        file.Open(fileName, Godot.File.ModeFlags.Read);
+        var binaryData = file.GetBuffer();
         file.Close();
 
-        var scene = ResourceLoader.Load<PackedScene>(baseScenePath).Instance();
-
-        // Manually swap scenes
+        // Load the scene
         tree.ChangeScene(baseScenePath);
         await tree.ToSignal(tree, "idle_frame");
 
         // Load the data
-        var persistedData = JArray.Parse(stringData);
+        using var ms = new MemoryStream(binaryData);
+        using var reader = new BsonDataReader(ms);
+        var persistedData = JArray.ReadFrom(reader) as JArray;
+        GD.Print(ms.Length);
+        GD.Print(persistedData.GetType());
         foreach (var token in persistedData) LoadPersistedNode((JObject) token, tree);
     }
 
@@ -64,7 +74,7 @@ public class PersistenceManager
         if (node == null)
         {
             var prefab = ResourceLoader.Load<PackedScene>(savedNode.GetValue("Filename").ToString());
-            var instance = prefab.Instance();
+            node = prefab.Instance();
 
             // Find parent
             var nodePath = new NodePath(savedNode.GetValue("Path").ToString());
@@ -73,7 +83,7 @@ public class PersistenceManager
             var parent = tree.Root.GetNode(parentPath);
 
             // Add to parent
-            parent.AddChild(instance, true);
+            parent.AddChild(node, true);
         }
 
         // Set properties
