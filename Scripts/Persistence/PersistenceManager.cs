@@ -64,19 +64,19 @@ public class PersistenceManager
 
         var node = tree.Root.GetNode(savedNode.GetValue("Path").ToString());
         // If node was created after scene initialization, create it now
+        Node parent = null;
+        bool nodeInstantiated = false;
         if (node == null)
         {
             var prefab = ResourceLoader.Load<PackedScene>(savedNode.GetValue("Filename").ToString());
-            var instance = prefab.Instance();
+            node = prefab.Instance();
 
             // Find parent
             var nodePath = new NodePath(savedNode.GetValue("Path").ToString());
             var nameList = nodePath.ToNameList();
             var parentPath = NodePathExtensions.FromList(nameList.Take(nameList.Count() - 1).ToList());
-            var parent = tree.Root.GetNode(parentPath);
-
-            // Add to parent
-            parent.AddChild(instance, true);
+            parent = tree.Root.GetNode(parentPath);
+            nodeInstantiated = true;
         }
 
         // Set properties
@@ -89,6 +89,12 @@ public class PersistenceManager
         {
             var property = type.GetProperty(customProperty.Key);
             property.SetValue(node, customProperty.Value.ToObject(property.PropertyType));
+        }
+
+        // If node needs to be added to scene, do so now
+        if (nodeInstantiated)
+        {
+            parent.AddChild(node, true);
         }
     }
 

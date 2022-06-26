@@ -4,6 +4,7 @@ using System;
 public class Sky : Spatial
 {
 	// 0 == midnight. 0.5 == noon. 1 == midnight again
+	[PersistableProperty]
 	[Export] public float TimeOfDay
 	{
 		get

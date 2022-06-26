@@ -34,7 +34,7 @@ public class BasePlant : Spatial, ITickable
     public virtual List<GrowthStage> GrowthStages { get; set; } = new();
     
     [PersistableProperty]
-    public int CurrentStageTicks { get; set; } = 0;
+    public int CurrentGrowthStageTicks { get; set; } = 0;
 
     [PersistableProperty]
     public int CurrentGrowthStageIdx
@@ -58,8 +58,8 @@ public class BasePlant : Spatial, ITickable
 
     public void Tick()
     {
-        CurrentStageTicks += 1;
-        if (currentGrowthStage != null && CurrentStageTicks == currentGrowthStage.DurationTicks + 1) // add one because the first tick wasn't a full tick probably
+        CurrentGrowthStageTicks += 1;
+        if (currentGrowthStage != null && CurrentGrowthStageTicks == currentGrowthStage.DurationTicks + 1) // add one because the first tick wasn't a full tick probably
         {
             int index = GrowthStages.IndexOf(currentGrowthStage);
             if (index + 1 < GrowthStages.Count) SetGrowthStage(GrowthStages[index + 1]);
@@ -70,7 +70,7 @@ public class BasePlant : Spatial, ITickable
     {
         if (currentGrowthStage != null) currentGrowthStage.Hide(this);
         currentGrowthStage = stage;
-        CurrentStageTicks = 0;
+        CurrentGrowthStageTicks = 0;
         currentGrowthStage.Show(this);
     }
 }

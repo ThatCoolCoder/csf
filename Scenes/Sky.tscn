@@ -17,7 +17,7 @@ _data = [ Vector2( 0.252004, 0.0288344 ), 0.0, 2.14294, 0, 0, Vector2( 0.500501,
 [sub_resource type="Curve" id=5]
 _data = [ Vector2( 0.247996, 0 ), 0.0, 11.5651, 0, 0, Vector2( 0.498497, 1 ), 0.0, 0.0, 0, 0, Vector2( 0.74499, 0 ), -12.2454, 0.0, 0, 0 ]
 
-[node name="Sky" type="Spatial" groups=["Tickable"]]
+[node name="Sky" type="Spatial" groups=["Persistable", "Tickable"]]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.953137 )
 script = ExtResource( 1 )
 SkyBrightnessCurve = SubResource( 3 )
