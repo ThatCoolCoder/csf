@@ -1,5 +1,10 @@
 // Manages saving/loading of entities
 
+// To make your own nodes persistable, add them to the Persistable group.
+// Persistable nodes can exist in the base scene from the start or can have been instantiated in gameplay - the manager will detect whether an instantiated node is needed
+// Transforms of Spatial-derived nodes are automatically persisted.
+// To perist custom properties, mark them with the [PersistableProperty] attribute. (properties must be public)
+
 using Godot;
 using System;
 using System.Linq;
@@ -52,18 +57,27 @@ public class PersistenceManager
 
         // Instance it
         var typeString = savedNode.GetValue("Type").ToString();
-        var type = Type.GetType(typeString); 
-        var scene = ResourceLoader.Load<PackedScene>(savedNode.GetValue("Filename").ToString());
-        var instance = scene.Instance();
+        var type = Type.GetType(typeString);
 
-        // Find parent
-        var nodePath = new NodePath(savedNode.GetValue("Path").ToString());
-        var nameList = nodePath.ToNameList();
-        var parentPath = NodePathExtensions.FromList(nameList.Take(nameList.Count() - 1).ToList());
-        var parent = tree.Root.GetNode(parentPath);
+        var node = tree.Root.GetNode(savedNode.GetValue("Path").ToString());
+        // If node was created after scene initialization, create it now
+        if (node == null)
+        {
+            var prefab = ResourceLoader.Load<PackedScene>(savedNode.GetValue("Filename").ToString());
+            var instance = prefab.Instance();
+
+            // Find parent
+            var nodePath = new NodePath(savedNode.GetValue("Path").ToString());
+            var nameList = nodePath.ToNameList();
+            var parentPath = NodePathExtensions.FromList(nameList.Take(nameList.Count() - 1).ToList());
+            var parent = tree.Root.GetNode(parentPath);
+
+            // Add to parent
+            parent.AddChild(instance, true);
+        }
 
         // Set properties
-        if (instance is Spatial spatial)
+        if (node is Spatial spatial)
         {
             spatial.Transform = savedNode.GetValue("Transform").ToObject<Transform>();
         }
@@ -71,27 +85,25 @@ public class PersistenceManager
         foreach (var customProperty in (savedNode.GetValue("CustomProperties") as JObject))
         {
             var property = type.GetProperty(customProperty.Key);
-            GD.Print(property.Name, customProperty.Value.ToObject(property.PropertyType));
-            property.SetValue(instance, customProperty.Value.ToObject(property.PropertyType));
+            property.SetValue(node, customProperty.Value.ToObject(property.PropertyType));
         }
-
-        // Add to scene
-        parent.AddChild(instance, true);
     }
 
     private static JToken PersistNode(Node node)
     {
+        GD.Print($"Saving: {node.GetPath().ToString()}");
+
         var jObject = new JObject();
         jObject.Add("Filename", node.Filename);
         jObject.Add("Path", node.GetPath().ToString());
         jObject.Add("Type", node.GetType().Name);
-        GD.Print($"Saving: {node.GetPath().ToString()}");
+
         if (node is Spatial spatial)
         {
             // persist spatial information - transform, etc
             jObject.Add("Transform", JToken.FromObject(spatial.Transform));
         }
-
+        
         // Persist custom properties
         var type = node.GetType();
         var properties = type.GetProperties()
