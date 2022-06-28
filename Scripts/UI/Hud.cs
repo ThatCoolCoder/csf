@@ -6,7 +6,7 @@ public class Hud : Control
 {
 	private void OnSaveButtonPressed()
 	{
-		PersistenceManager.PersistScene(GetTree(), PersistenceManager.TestFileName);
+		PersistenceManager.PersistScene(GetTree(), PersistenceManager.TestFileName, false);
 	}	
 
 	private async void OnLoadButtonPressed()

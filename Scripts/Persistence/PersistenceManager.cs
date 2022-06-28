@@ -6,7 +6,9 @@
 // To perist custom properties, mark them with the [PersistableProperty] attribute. (properties must be public)
 
 // Internal notes:
+// A lot of work has gone into minimising save-file size.
 // Transforms are really big to store in object form in JSON but fortunately, Godot can base64-encode them by default and this makes a huge difference.
+// We have custom one-character names for all the "framework" properties to try and minimise space.
 
 using Godot;
 using System;
@@ -17,20 +19,50 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+class PersistedGame
+{
+    [JsonProperty("S")]
+    public int SaveFormatVersion { get; set; }
+    [JsonProperty("T")]
+    public DateTime SavedAtUtc { get; set; }
+    [JsonProperty("N")]
+    public List<PersistedNode> Nodes { get; set; }
+}
+
+class PersistedNode
+{
+    [JsonProperty("F")]
+    public string Filename { get; set; }
+    [JsonProperty("P")]
+    public string Path { get; set; }
+    [JsonProperty("T")]
+    public string Type { get; set; }
+    [JsonProperty("R")]
+    public string TransformString { get; set; } // Much more efficient to base64-encode a transform than store it as a whole json
+    [JsonProperty("C")]
+    public List<CustomProperty> CustomProperties;
+}
+
 public class PersistenceManager
 {
     public static readonly string TestFileName = "user://game.json";
+    public static readonly int SaveFormatVersion = -1; // -1 indicates pre-alpha
 
-    public static void PersistScene(SceneTree tree, string fileName)
+    public static void PersistScene(SceneTree tree, string fileName, bool debug = false)
     {
         // Persist an entire scene
         var persistableNodes = tree.GetNodesInGroup("Persistable").Cast<Node>().ToList();
-        JArray result = new();
-        foreach (var node in persistableNodes) result.Add(PersistNode(node));
+        var result = new PersistedGame()
+        {
+            SaveFormatVersion = SaveFormatVersion,
+            SavedAtUtc = DateTime.UtcNow,
+            Nodes = new()
+        };
+        foreach (var node in persistableNodes) result.Nodes.Add(PersistNode(node));
         
         var file = new File();
         file.Open(fileName, File.ModeFlags.Write);
-        file.StoreString(result.ToString());
+        file.StoreString(JsonConvert.SerializeObject(result, debug ? Formatting.Indented : Formatting.None, new CustomPropertyConverter()));
         file.Close();
     }
 
@@ -49,30 +81,60 @@ public class PersistenceManager
         await tree.ToSignal(tree, "idle_frame");
 
         // Load the data
-        var persistedData = JArray.Parse(stringData);
-        foreach (var token in persistedData) LoadPersistedNode((JObject) token, tree);
+        var persistedData = JsonConvert.DeserializeObject<PersistedGame>(stringData, new CustomPropertyConverter());
+        if (persistedData.SaveFormatVersion != SaveFormatVersion)
+            throw new Exception($"Error loading game: save format is incompatible. Saved in format {persistedData.SaveFormatVersion}, reading in format {SaveFormatVersion}");
+        foreach (var persistedNode in persistedData.Nodes) LoadPersistedNode(persistedNode, tree);
     }
 
-    private static void LoadPersistedNode(JObject savedNode, SceneTree tree)
+    private static PersistedNode PersistNode(Node node)
     {
-        var debugPath = savedNode.GetValue("Path").ToString();
-        GD.Print($"Loading: {debugPath}");
+        GD.Print($"Saving: {node.GetPath().ToString()}");
 
-        // Instance it
-        var typeString = savedNode.GetValue("Type").ToString();
-        var type = Type.GetType(typeString);
+        var result = new PersistedNode()
+        {
+            Filename = node.Filename,
+            Path = node.GetPath().ToString(),
+            Type = node.GetType().Name,
+            CustomProperties = new()
+        };
 
-        var node = tree.Root.GetNode(savedNode.GetValue("Path").ToString());
-        // If node was created after scene initialization, create it now
+        if (node is Spatial spatial)
+        {
+            // persist spatial information - transform, etc
+            result.TransformString = TransformToString(spatial.Transform);
+        }
+        
+        // Persist custom properties
+        var type = node.GetType();
+        var properties = type.GetProperties()
+            .Where(prop => prop.IsDefined(typeof(PersistableProperty), true));
+
+        foreach (var property in properties)
+        {
+            result.CustomProperties.Add(new(property.PropertyType.ToString(), property.Name, property.GetValue(node)));
+        }
+
+        return result;
+    }
+
+    private static void LoadPersistedNode(PersistedNode persistedNode, SceneTree tree)
+    {
+        GD.Print($"Loading: {persistedNode.Path}");
+
+        // Add it to scene
+        var type = Type.GetType(persistedNode.Type);
+        var node = tree.Root.GetNode(persistedNode.Path);
         Node parent = null;
         bool nodeInstantiated = false;
+        // If node was created after scene initialization, create it now
         if (node == null)
         {
-            var prefab = ResourceLoader.Load<PackedScene>(savedNode.GetValue("Filename").ToString());
+            var prefab = ResourceLoader.Load<PackedScene>(persistedNode.Filename);
             node = prefab.Instance();
 
             // Find parent
-            var nodePath = new NodePath(savedNode.GetValue("Path").ToString());
+            var nodePath = new NodePath(persistedNode.Path);
             var nameList = nodePath.ToNameList();
             var parentPath = NodePathExtensions.FromList(nameList.Take(nameList.Count() - 1).ToList());
             parent = tree.Root.GetNode(parentPath);
@@ -82,13 +144,13 @@ public class PersistenceManager
         // Set properties
         if (node is Spatial spatial)
         {
-            spatial.Transform = StringToTransform(savedNode.GetValue("Transform").ToString());
+            spatial.Transform = StringToTransform(persistedNode.TransformString);
         }
         // Custom properties
-        foreach (var customProperty in (savedNode.GetValue("CustomProperties") as JObject))
+        foreach (var customProperty in persistedNode.CustomProperties)
         {
-            var property = type.GetProperty(customProperty.Key);
-            property.SetValue(node, customProperty.Value.ToObject(property.PropertyType));
+            var property = type.GetProperty(customProperty.Name);
+            property.SetValue(node, customProperty.Value);
         }
 
         // If node needs to be added to scene, do so now
@@ -96,36 +158,6 @@ public class PersistenceManager
         {
             parent.AddChild(node, true);
         }
-    }
-
-    private static JToken PersistNode(Node node)
-    {
-        GD.Print($"Saving: {node.GetPath().ToString()}");
-
-        var jObject = new JObject();
-        jObject.Add("Filename", node.Filename);
-        jObject.Add("Path", node.GetPath().ToString());
-        jObject.Add("Type", node.GetType().Name);
-
-        if (node is Spatial spatial)
-        {
-            // persist spatial information - transform, etc
-            jObject.Add("Transform", JToken.FromObject(TransformToString(spatial.Transform)));
-        }
-        
-        // Persist custom properties
-        var type = node.GetType();
-        var properties = type.GetProperties()
-            .Where(prop => prop.IsDefined(typeof(PersistableProperty), true));
-
-        var customProperties = new JObject();
-        foreach (var property in properties)
-        {
-            customProperties.Add(property.Name, JToken.FromObject(property.GetValue(node)));
-        }
-        jObject.Add("CustomProperties", customProperties);
-
-        return jObject;
     }
 
     private static string TransformToString(Transform transform)
