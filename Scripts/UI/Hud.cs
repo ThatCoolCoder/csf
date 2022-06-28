@@ -6,11 +6,14 @@ public class Hud : Control
 {
 	private void OnSaveButtonPressed()
 	{
-		PersistenceManager.PersistScene(GetTree(), PersistenceManager.TestFileName, false);
+		PersistenceManager.PersistGame(GetTree(), PersistenceManager.TestFileName, false);
 	}	
 
 	private async void OnLoadButtonPressed()
 	{
-		await PersistenceManager.LoadPersistedScene(GetTree(), PersistenceManager.TestFileName, "res://Scenes/Main.tscn");
+		var persistedGame = await PersistenceManager.LoadPersistedGame(GetTree(), PersistenceManager.TestFileName, "res://Scenes/Main.tscn");
+		var timeMissed = DateTime.UtcNow - persistedGame.SavedAtUtc;
+		GD.Print($"Skipping {timeMissed}");
+		TickManager.Instance.FastForward(timeMissed);
 	}
 }

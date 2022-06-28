@@ -19,36 +19,12 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-class PersistedGame
-{
-    [JsonProperty("S")]
-    public int SaveFormatVersion { get; set; }
-    [JsonProperty("T")]
-    public DateTime SavedAtUtc { get; set; }
-    [JsonProperty("N")]
-    public List<PersistedNode> Nodes { get; set; }
-}
-
-class PersistedNode
-{
-    [JsonProperty("F")]
-    public string Filename { get; set; }
-    [JsonProperty("P")]
-    public string Path { get; set; }
-    [JsonProperty("T")]
-    public string Type { get; set; }
-    [JsonProperty("R")]
-    public string TransformString { get; set; } // Much more efficient to base64-encode a transform than store it as a whole json
-    [JsonProperty("C")]
-    public List<CustomProperty> CustomProperties;
-}
-
 public class PersistenceManager
 {
     public static readonly string TestFileName = "user://game.json";
     public static readonly int SaveFormatVersion = -1; // -1 indicates pre-alpha
 
-    public static void PersistScene(SceneTree tree, string fileName, bool debug = false)
+    public static void PersistGame(SceneTree tree, string fileName, bool debug = false)
     {
         // Persist an entire scene
         var persistableNodes = tree.GetNodesInGroup("Persistable").Cast<Node>().ToList();
@@ -66,7 +42,7 @@ public class PersistenceManager
         file.Close();
     }
 
-    public static async Task LoadPersistedScene(SceneTree tree, string fileName, string baseScenePath)
+    public static async Task<PersistedGame> LoadPersistedGame(SceneTree tree, string fileName, string baseScenePath)
     {
         // Load scene from baseScenePath then load persisted data
         var file = new File();
@@ -81,10 +57,12 @@ public class PersistenceManager
         await tree.ToSignal(tree, "idle_frame");
 
         // Load the data
-        var persistedData = JsonConvert.DeserializeObject<PersistedGame>(stringData, new CustomPropertyConverter());
-        if (persistedData.SaveFormatVersion != SaveFormatVersion)
-            throw new Exception($"Error loading game: save format is incompatible. Saved in format {persistedData.SaveFormatVersion}, reading in format {SaveFormatVersion}");
-        foreach (var persistedNode in persistedData.Nodes) LoadPersistedNode(persistedNode, tree);
+        var persistedGame = JsonConvert.DeserializeObject<PersistedGame>(stringData, new CustomPropertyConverter());
+        if (persistedGame.SaveFormatVersion != SaveFormatVersion)
+            throw new Exception($"Error loading game: save format is incompatible. Saved in format {persistedGame.SaveFormatVersion}, reading in format {SaveFormatVersion}");
+        foreach (var persistedNode in persistedGame.Nodes) LoadPersistedNode(persistedNode, tree);
+
+        return persistedGame;
     }
 
     private static PersistedNode PersistNode(Node node)
