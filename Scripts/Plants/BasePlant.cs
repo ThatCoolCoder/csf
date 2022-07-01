@@ -60,7 +60,7 @@ public class BasePlant : Spatial, ITickable
     public void Tick()
     {
         CurrentGrowthStageTicks += 1;
-        if (currentGrowthStage != null && CurrentGrowthStageTicks == currentGrowthStage.DurationTicks + 1) // add one because the first tick wasn't a full tick probably
+        if (currentGrowthStage != null && CurrentGrowthStageTicks == currentGrowthStage.DurationTicks)
         {
             int index = GrowthStages.IndexOf(currentGrowthStage);
             if (index + 1 < GrowthStages.Count) SetGrowthStage(GrowthStages[index + 1]);

@@ -41,6 +41,11 @@ far = 8192.0
 [node name="ViewRayCast" type="RayCast" parent="Head"]
 cast_to = Vector3( 0, 0, 200 )
 
+[node name="ItemInfoRayCast" type="RayCast" parent="Head"]
+cast_to = Vector3( 0, 0, 200 )
+collision_mask = 2
+collide_with_areas = true
+
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 playback_speed = 2.0
 anims/head_bobbing = SubResource( 3 )

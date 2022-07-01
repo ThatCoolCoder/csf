@@ -16,4 +16,10 @@ public class Hud : Control
 		GD.Print($"Skipping {timeMissed}");
 		TickManager.Instance.FastForward(timeMissed);
 	}
+
+
+	private void OnResetButtonPressed()
+	{
+		GetTree().ReloadCurrentScene();
+	}
 }

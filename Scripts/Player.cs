@@ -31,15 +31,17 @@ public class Player : KinematicBody
 	private Vector3 velocity;
 	private Vector3 previousVelocity; // velocity last frame
 	private float gravity = (float) ProjectSettings.GetSetting("physics/3d/default_gravity");
+	public Node LookingAt { get; private set; }
 
 	// Node references
 	private Spatial head;
 	private AnimationPlayer animationPlayer;
 	private Area harvestingArea;
 	private RayCast viewRayCast;
+	private RayCast itemInfoRayCast;
 
 	// Temp
-	private CubePlantSeed seeds = new();
+	private BaseSeed seeds = new("res://Scenes/Plants/Tomato.tscn");
 
 	public override void _Ready()
 	{
@@ -49,6 +51,7 @@ public class Player : KinematicBody
 		animationPlayer.CurrentAnimation = "head_bobbing";
 		harvestingArea = GetNode<Area>("HarvestingArea");
 		viewRayCast = GetNode<RayCast>("Head/ViewRayCast");
+		itemInfoRayCast = GetNode<RayCast>("Head/ItemInfoRayCast");
 
 		// Set here because we can't do it in field initialisers
 		stateActions = new()
@@ -81,6 +84,7 @@ public class Player : KinematicBody
 		
 		UpdateAnimation();
 		previousVelocity = velocity;
+		DoAllActionsActivities();
 	}
 
 	private void ResetState()
@@ -122,11 +126,8 @@ public class Player : KinematicBody
 
 		var acceleration = CheckWalkKeybinds();
 		CheckJumpKeybinds();
-		CheckHarvestKeybinds();
-		CheckInventoryKeybinds();
 		ClampHorizontalVelocity();
 		FeelFloorFriction(acceleration, delta);
-		CheckViewKeybinds();
 		return acceleration;
 	}
 
@@ -136,7 +137,6 @@ public class Player : KinematicBody
 		
 		var acceleration = CheckWalkKeybinds();
 		ClampHorizontalVelocity();
-		CheckViewKeybinds();
 
 		return acceleration;
 	}
@@ -156,42 +156,12 @@ public class Player : KinematicBody
 		return acceleration;
 	}
 
-	private void CheckViewKeybinds()
-	{
-		if (Input.IsActionJustPressed("toggle_mouse_lock"))
-		{
-			if (Input.GetMouseMode() == Input.MouseMode.Captured) Input.SetMouseMode(Input.MouseMode.Visible);
-			else Input.SetMouseMode(Input.MouseMode.Captured);
-		}
-	}
-
 	private void CheckJumpKeybinds()
 	{
 		if (Input.IsActionJustPressed("jump") && IsOnFloor())
 		{
 			velocity.y = jumpSpeed;
 			State = PlayerState.FreeFall;
-		}
-	}
-
-	private void CheckHarvestKeybinds()
-	{
-		if (Input.IsActionJustPressed("harvest"))
-		{
-			var nodes = harvestingArea.GetOverlappingAreas().Cast<Spatial>().Where(x => x.IsInGroup("Harvestable"));
-			foreach (var node in nodes) node.QueueFree();
-		}
-	}
-
-	private void CheckInventoryKeybinds()
-	{
-		if (Input.IsActionJustPressed("discard"))
-		{
-			viewRayCast.ForceRaycastUpdate();
-			if (viewRayCast.IsColliding())
-			{
-				seeds.Discard(viewRayCast.GetCollisionPoint(), GetParent());
-			}
 		}
 	}
 
@@ -218,4 +188,52 @@ public class Player : KinematicBody
 	}
 
 	#endregion UsedByActions
+
+	#region UsedByAllActions
+
+	private void DoAllActionsActivities()
+	{
+		CheckHarvestKeybinds();
+		CheckInventoryKeybinds();
+		CheckViewKeybinds();
+	}
+
+	private void CheckHarvestKeybinds()
+	{
+		if (Input.IsActionJustPressed("harvest"))
+		{
+			var nodes = harvestingArea.GetOverlappingAreas().Cast<Spatial>().Where(x => x.IsInGroup("Harvestable"));
+			foreach (var node in nodes) node.QueueFree();
+		}
+	}
+
+	private void CheckInventoryKeybinds()
+	{
+		if (Input.IsActionJustPressed("discard"))
+		{
+			viewRayCast.ForceRaycastUpdate();
+			if (viewRayCast.IsColliding())
+			{
+				seeds.Discard(viewRayCast.GetCollisionPoint(), GetParent());
+			}
+		}
+	}
+
+	private void CheckViewKeybinds()
+	{
+		if (Input.IsActionJustPressed("toggle_mouse_lock"))
+		{
+			if (Input.GetMouseMode() == Input.MouseMode.Captured) Input.SetMouseMode(Input.MouseMode.Visible);
+			else Input.SetMouseMode(Input.MouseMode.Captured);
+		}
+	}
+
+	private void GetItemInfo()
+	{
+		itemInfoRayCast.ForceRaycastUpdate();
+		if (itemInfoRayCast.IsColliding()) LookingAt = itemInfoRayCast.GetCollider() as Node;
+		else LookingAt = null;
+	}
+
+	#endregion UsedByAllActions
 }

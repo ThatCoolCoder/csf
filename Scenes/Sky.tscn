@@ -34,9 +34,3 @@ script = ExtResource( 3 )
 transform = Transform( 1, 0, 0, 0, 0.391085, 0.920355, 0, -0.920355, 0.391085, 0, 0, 0 )
 light_energy = 0.812
 shadow_enabled = true
-
-[node name="CSGBox" type="CSGBox" parent="DirectionalLight"]
-transform = Transform( 1, 0, 0, 0, 1, -2.98023e-08, 0, 2.98023e-08, 1, 0, 0.0335913, -1.05657 )
-visible = false
-width = 0.726641
-height = 0.756597

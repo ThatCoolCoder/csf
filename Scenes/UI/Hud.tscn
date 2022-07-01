@@ -11,16 +11,23 @@ script = ExtResource( 1 )
 margin_right = 124.0
 margin_bottom = 44.0
 
-[node name="SaveButton" type="Button" parent="VBoxContainer"]
+[node name="ResetButton" type="Button" parent="VBoxContainer"]
 margin_right = 124.0
 margin_bottom = 20.0
-text = "Dump scene data"
+text = "Reset scene"
 
-[node name="LoadButton" type="Button" parent="VBoxContainer"]
+[node name="SaveButton" type="Button" parent="VBoxContainer"]
 margin_top = 24.0
 margin_right = 124.0
 margin_bottom = 44.0
+text = "Dump scene data"
+
+[node name="LoadButton" type="Button" parent="VBoxContainer"]
+margin_top = 48.0
+margin_right = 124.0
+margin_bottom = 68.0
 text = "Load scene data"
 
+[connection signal="pressed" from="VBoxContainer/ResetButton" to="." method="OnResetButtonPressed"]
 [connection signal="pressed" from="VBoxContainer/SaveButton" to="." method="OnSaveButtonPressed"]
 [connection signal="pressed" from="VBoxContainer/LoadButton" to="." method="OnLoadButtonPressed"]
