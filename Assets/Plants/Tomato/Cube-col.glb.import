@@ -2,12 +2,12 @@
 
 importer="scene"
 type="PackedScene"
-path="res://.import/Stage1.001.glb-5bc490272a2b99cb80dbc9f0c5c7f6cc.scn"
+path="res://.import/Cube-col.glb-ab30c4393d53a85bc11bb2d8f205a353.scn"
 
 [deps]
 
-source_file="res://Assets/Plants/Tomato/Stage1.001.glb"
-dest_files=[ "res://.import/Stage1.001.glb-5bc490272a2b99cb80dbc9f0c5c7f6cc.scn" ]
+source_file="res://Assets/Plants/Tomato/Cube-col.glb"
+dest_files=[ "res://.import/Cube-col.glb-ab30c4393d53a85bc11bb2d8f205a353.scn" ]
 
 [params]
 
