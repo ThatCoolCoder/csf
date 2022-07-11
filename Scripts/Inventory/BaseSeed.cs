@@ -6,6 +6,9 @@ public class BaseSeed : IStorable
     private PackedScene prefab;
     private RandomNumberGenerator random = new();
 
+    public float Mass { get; } = 0.05f;
+    public float Volume { get; } = 0.05f;
+
     public BaseSeed(string prefabPath)
     {
         prefab = ResourceLoader.Load<PackedScene>(prefabPath);
