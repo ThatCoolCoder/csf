@@ -8,6 +8,8 @@ radius = 0.133274
 [node name="Fruit" type="Area" groups=["Harvestable"]]
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
+transform = Transform( 0.758086, 0, 0, 0, 0.758086, 0, 0, 0, 0.758086, 0, 0, 0 )
 shape = SubResource( 2 )
 
 [node name="RandomFruit" parent="." instance=ExtResource( 1 )]
+transform = Transform( 0.483464, 0, 0, 0, 0.483464, 0, 0, 0, 0.483464, 0, 0, 0 )
