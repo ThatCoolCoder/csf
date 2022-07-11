@@ -72,7 +72,7 @@ class QuickGltf(bpy.types.Operator):
             # Select everything
             obj.select_set(True)
 
-        bpy.ops.export_scene.gltf(filepath=target_path, use_selection=True)
+        bpy.ops.export_scene.gltf(filepath=target_path, use_selection=True, export_apply=True)
 
         for obj in created_objects:
             bpy.ops.object.delete()

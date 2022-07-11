@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Scenes/Sky.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Scripts/TickManager.cs" type="Script" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://addons/zylann.hterrain/hterrain.gd" type="Script" id=4]
 [ext_resource path="res://addons/zylann.hterrain/hterrain_texture_set.gd" type="Script" id=5]
 [ext_resource path="res://Scenes/Player.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Assets/Creatures/Dog/Body.glb" type="PackedScene" id=7]
 [ext_resource path="res://Scenes/UI/Hud.tscn" type="PackedScene" id=8]
 
 [sub_resource type="SpatialMaterial" id=1]
@@ -41,6 +42,7 @@ depth = 3.94544
 
 [node name="Sky" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 0.986518, -0.163653, 0, 0.163653, 0.986518, 0, 8.07061, 8.91159e-08 )
+TimeOfDay = 0.75
 
 [node name="TickManager" type="Spatial" parent="."]
 script = ExtResource( 2 )
@@ -81,5 +83,8 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.49238, -5.0151 )
 shape = SubResource( 5 )
 
 [node name="CSGBox" type="CSGBox" parent="RigidBody"]
+
+[node name="Body" parent="." instance=ExtResource( 7 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.20943, 1.37602, 7.08239 )
 
 [connection signal="timeout" from="TickManager/TickTimer" to="TickManager" method="SubTick"]
