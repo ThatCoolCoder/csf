@@ -11,6 +11,6 @@ public class TickableSky : Sky, ITickable
 
 	public void Tick()
 	{
-
+		
 	}
 }
